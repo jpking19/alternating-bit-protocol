@@ -79,6 +79,8 @@ void A_output(struct msg message) {
 
   A_prev_packet.checksum = generate_checksum(A_prev_packet);
 
+  printf("A: A is going to send the following packet:\nSequence number: %d\nChecksum: %d\nMessage: %s\n", A_prev_packet.seqnum, A_prev_packet.checksum, A_prev_packet.payload);
+
   // Send the packet to layer 3 and start the timer
   tolayer3(AEntity, A_prev_packet);
   startTimer(AEntity, TIMEOUT);
@@ -122,6 +124,7 @@ void A_input(struct pkt packet) {
     }
     // Something in the queue or overflow of queue
     else if (queueMax > 0 || (queueMax == 0 && queueIndex != 0)) {
+      printf("\nA_input: Something else in queue.\n");
       stopTimer(AEntity);
       IS_WAITING = 0;
       A_output(msgQueue[queueIndex]); // Run output on next message in queue
@@ -237,10 +240,13 @@ int flip (int num) {
  */
 int generate_checksum(struct pkt packet) {
   int num = 0;
-  if (packet.payload[0] != NULL) {
+  if (packet.payload[0]) {
     int i;
     for (i = 0; i < MESSAGE_LENGTH; i++) {
       num += packet.payload[i] * checkCalc[i];
+      if (!packet.payload[i]) {
+        num = 0;
+      }
     }
   }
   num += ((packet.seqnum + 2) * checkCalc[0]);
